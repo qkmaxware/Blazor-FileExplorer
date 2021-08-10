@@ -1,0 +1,91 @@
+.qk-explorer {
+    background-color: rgb(54, 53, 63);
+    color:white;
+}
+.qk-explorer-title {
+    text-align: center;
+    padding: 4px;
+}
+.qk-explorer-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+.qk-explorer-row span {
+    padding: 2px;
+}
+.qk-explorer-path {
+    background-color: rgb(36, 35, 44);
+    color:white;
+    width: 100%;
+    padding: 2px;
+    border: none;
+}
+.qk-explorer-filters {
+    border: none;
+    background-color: rgb(36, 35, 44);
+    color:white;
+    width: 100%;
+    padding: 2px;
+    border: none;
+}
+.qk-explorer-body {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+.qk-explorer-inlay {
+    background-color: rgb(36, 35, 44);
+    color:white;
+    border-radius: 6px;
+    padding: 2px;
+    min-height: 48px;
+    margin-bottom: 4px;
+}
+.qk-explorer-lists {
+    padding: 4px;
+    width: 240px;
+}
+.qk-explorer-files {
+    padding: 4px;
+    flex-grow: 1;
+}
+
+.qk-explorer-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 6px;
+}
+.qk-explorer-list li {
+    padding: 2px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid rgb(64, 63, 68);
+}
+.qk-explorer-list li:hover {
+    background-color: rgb(50, 49, 59);
+}
+
+.qk-explorer-button {
+    border: none;
+    background-color: rgb(36, 35, 44);
+    color: white;
+    padding: 4px 8px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    user-select: none;
+    cursor: pointer;
+}
+.qk-explorer-button:hover {
+    background-color: rgb(27, 26, 37);
+}
+
+.qk-explorer-button.qk-no-bg {
+    background-color: transparent;
+}
+
+.qk-explorer-button.qk-no-bg:hover {
+    background-color: rgb(27, 26, 37);
+}

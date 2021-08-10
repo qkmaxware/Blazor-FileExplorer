@@ -1,0 +1,17 @@
+@page "/"
+@using Qkmaxware.Blazor.FileExplorer.Components
+@using Qkmaxware.Blazor.FileExplorer.Data
+
+<FileExplorer Title="Open a File" Filters=filters ConfirmationText="Load File" AllowEdit=false>
+
+</FileExplorer>
+
+@code {
+    private FilenameFilter[] filters = new FilenameFilter[]{
+        FilenameFilter.Any(),
+        FilenameFilter.Extension("Any Image", "png", "jpeg", "jpg", "tif"),
+        FilenameFilter.Extension("Any Video", "mp4", "mpeg", "avi"),
+        FilenameFilter.Extension("Any Audio", "mp3", "wav", "flak"),
+        FilenameFilter.Extension("Code", "csproj", "cs", "json", "razor", "cshtml"),
+    };
+}

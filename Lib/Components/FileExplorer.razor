@@ -1,0 +1,258 @@
+@using System
+@using System.IO;
+@using Data
+
+<div class="qk-explorer">
+    <div class="qk-explorer-title">
+        @Title
+    </div>
+    <div class="qk-explorer-row">
+        <button @onclick=back class="qk-explorer-button qk-no-bg">&#10094;</button>
+        <button @onclick=forward class="qk-explorer-button qk-no-bg">&#10095;</button>
+        <button @onclick=parent class="qk-explorer-button qk-no-bg">&#8613;</button>
+        <span>
+            Path:
+        </span>
+        <span style="flex-grow:1;">
+            <input class="qk-explorer-path" disabled value="@currentDirectory">
+        </span>
+        <button @onclick=refresh class="qk-explorer-button qk-no-bg">
+            &#128472;
+        </button>
+    </div>
+    <div class="qk-explorer-body">
+        <div class="qk-explorer-lists">
+            <label>Volumes:</label>
+            <div class="qk-explorer-inlay">
+                <ul class="qk-explorer-list">
+                    @if (drives != null) {
+                        foreach (var drive in drives) {
+                            <li @onclick=@(() => setDirectory(drive.Value))>@drive.Key</li>
+                        } 
+                    }
+                </ul>
+            </div>
+            <label>System:</label>
+            <div class="qk-explorer-inlay">
+                <ul class="qk-explorer-list">
+                    @if (systemFolders != null) {
+                        foreach (var directory in systemFolders) {
+                            <li @onclick=@(() => setDirectory(directory.Value))>@directory.Key</li>
+                        }
+                    } 
+                </ul>
+            </div>
+            <label>Recent:</label>
+            <div class="qk-explorer-inlay">
+                <ul class="qk-explorer-list">
+                    @if (recent != null) {
+                        foreach (var path in recent) {
+                            <li @onclick=@(() => setDirectory(path))>@Path.GetFileName(path)</li>
+                        }
+                    } 
+                </ul>
+            </div>
+        </div>
+        <div class="qk-explorer-files">
+            <label>Directories & Files:</label>
+            <div class="qk-explorer-inlay" style="height: 480px; overflow-y: auto;">
+                <ul class="qk-explorer-list">
+                    @foreach (var dir in subdirs) {
+                        <li @onclick=@(() => setDirectory(dir))>&#128448; <b>@Path.GetFileName(dir)</b></li>
+                    }
+                    @foreach (var name in files) {
+                        <li @onclick=@(() => selectFile(name))>@name</li>
+                    }
+                </ul>
+            </div>
+            <div class="qk-explorer-row">
+                <span>
+                    File: 
+                </span>
+                <span style="flex-grow:2;">
+                    <input class="qk-explorer-path" disabled="@(!AllowEdit)" @bind=currentFilename>
+                </span>
+                <span style="flex-grow:1;">
+                    <select class="qk-explorer-filters" @bind=filterIndex>
+                        @if (Filters != null) {
+                            for (var i = 0; i < Filters.Length; i++) {
+                                var filter = Filters[i];
+                                <option value=@i>@filter.Name (@(filter.Hint))</option>
+                            }
+                        }
+                    </select>
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="qk-explorer-row">
+        <span style="padding: 8px; flex-grow:1; text-align: left;">
+            <button @onclick=cancel class="qk-explorer-button">Cancel</button>
+        </span>
+        <span style="padding: 8px; flex-grow:1; text-align: right;">
+            <button @onclick=confirm class="qk-explorer-button">@ConfirmationText</button>
+        </span>
+    </div>
+</div>
+@code {
+    [Parameter] public string Title {get; set;}
+    [Parameter] public string StartingDirectory {get; set;}
+    [Parameter] public FilenameFilter[] Filters {get; set;} = new FilenameFilter[] {
+        FilenameFilter.Any()
+    };
+    [Parameter] public string ConfirmationText {get; set;} = "Ok";
+    [Parameter] public bool AllowEdit {get; set;} = false;
+    [Parameter] public Action<string> OnConfirm {get; set;}
+    [Parameter] public Action OnCancel {get; set;}
+
+    private int _filterIndex;
+    private int filterIndex {
+        get =>_filterIndex;
+        set {
+            _filterIndex = value;
+            listFiles();
+        }
+    }
+    private FilenameFilter Filter => Filters != null && filterIndex >= 0 && filterIndex < Filters.Length ? Filters[filterIndex] : null;
+
+    private string currentDirectory;
+    private string currentFilename;
+    private string fullPath => currentFilename == null ? currentDirectory : Path.Combine(currentDirectory, currentFilename);
+
+    protected override void OnInitialized() {
+        history.Clear();
+        setDirectory(StartingDirectory ?? Directory.GetCurrentDirectory());
+        RefreshDrives();
+        RefreshSystemDirectories();
+    }
+
+    private void setDirectory(string path, bool clearHistory=true) {
+        if (clearHistory)
+            popHistory();
+
+        this.currentDirectory = Path.GetFullPath(path);
+
+        if (clearHistory)
+            pushHistory(path);
+
+        this.currentFilename = null; // Deselect file when changing directories
+        listFolders();
+        listFiles();
+    }
+    private void selectFile(string filename) {
+        this.currentFilename = filename;
+    }
+
+    private List<string> subdirs = new List<string>();
+    private void listFolders() {
+        List<string> paths = new List<string>();
+        try {
+            foreach (var dir in System.IO.Directory.EnumerateDirectories(this.currentDirectory)) {
+                paths.Add(dir);
+            }
+        } catch {}
+        subdirs = paths;
+    }
+    private List<string> files = new List<string>();
+    private void listFiles() {
+        List<string> paths = new List<string>();
+        try {
+            foreach (var dir in System.IO.Directory.EnumerateFiles(this.currentDirectory)) {
+                var filename = Path.GetFileName(dir);
+                if (Filter == null || Filter.Matches(filename)) {
+                    paths.Add(filename);
+                }
+            }
+        } catch {}
+        files = paths;
+    }
+
+    private Dictionary<string, string> systemFolders = new Dictionary<string, string>();
+    public void RefreshSystemDirectories() {
+        Environment.SpecialFolder[] dirs = new Environment.SpecialFolder[]{
+            Environment.SpecialFolder.UserProfile,
+            Environment.SpecialFolder.Desktop,
+            Environment.SpecialFolder.MyDocuments,
+            Environment.SpecialFolder.MyVideos,
+            Environment.SpecialFolder.MyPictures,
+            Environment.SpecialFolder.ApplicationData,
+        };
+        this.systemFolders = dirs.Select(dir => Environment.GetFolderPath(dir))
+            .Where(dir => !string.IsNullOrEmpty(dir))
+            .ToDictionary((dir) => Path.GetFileName(dir));
+    }
+
+    private Dictionary<string, string> drives = new Dictionary<string, string>();
+    public void RefreshDrives() {
+        drives.Clear();
+        try {
+            foreach(var drive in System.IO.DriveInfo.GetDrives()) {
+                try{
+                    var name = drive.Name + " " + drive.VolumeLabel;
+                    var path = drive.RootDirectory.FullName;
+                    drives.Add(name, path);
+                } catch {}
+            }
+        } catch {}
+    }
+
+    private List<string> history = new List<string>();
+    private int historyIndex = 0;
+    private int maxHistory = 100;
+    private void pushHistory(string path) {
+        this.history.Add(path);
+        while (this.history.Count > maxHistory) {
+            this.history.RemoveAt(0); // remove oldest
+        }
+        this.historyIndex = history.Count - 1;
+    }
+    private void popHistory() {
+        var index = historyIndex + 1;
+        if (index < history.Count)
+            this.history.RemoveRange(index, history.Count - index);
+    }
+    private void back() {
+        if (this.historyIndex > 0 ) {
+            this.historyIndex --;
+        }
+        if (this.historyIndex >= 0 && this.historyIndex < this.history.Count) {
+            setDirectory(this.history[this.historyIndex], clearHistory: false);
+        }
+    }
+    private void forward() {
+        if (this.historyIndex < (this.history.Count - 1) ) {
+            this.historyIndex ++;
+        }
+        if (this.historyIndex >= 0 && this.historyIndex < this.history.Count) {
+            setDirectory(this.history[this.historyIndex], clearHistory: false);
+        }
+    }
+    private void parent() {
+        var parent = Directory.GetParent(this.currentDirectory)?.FullName;
+        if (parent != null) {
+            this.setDirectory(parent);
+        }
+    }
+    private void refresh() {
+        RefreshDrives();
+        RefreshSystemDirectories();
+        listFolders();
+        listFiles();
+    }
+
+    private List<string> recent = new List<string>();
+    private int maxRecent = 8;
+    private void cancel() {
+        this.OnCancel?.Invoke();
+    }
+    private void confirm() {
+        if (!string.IsNullOrEmpty(fullPath)) {
+            this.OnConfirm?.Invoke(fullPath);
+            recent.Add(this.currentDirectory);
+            while (this.recent.Count > maxRecent) {
+                this.recent.RemoveAt(0); // remove oldest
+            }
+        }
+    }
+
+}
