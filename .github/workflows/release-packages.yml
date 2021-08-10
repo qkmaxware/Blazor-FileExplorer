@@ -25,7 +25,7 @@ jobs:
       env: 
         GITHUB_USERNAME: qkmaxware
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: dotnet restore --configfile nuget.config
+      run: dotnet restore
     - name: Pack Nuget Package
       env:
         # Work around https://github.com/actions/setup-dotnet/issues/29
