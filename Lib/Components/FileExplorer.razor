@@ -55,7 +55,7 @@
         </div>
         <div class="qk-explorer-files">
             <label>Directories & Files:</label>
-            <div class="qk-explorer-inlay" style="height: 480px; overflow-y: auto;">
+            <div class="qk-explorer-inlay" style="height: 50vh; overflow-y: auto;">
                 <ul class="qk-explorer-list">
                     @foreach (var dir in subdirs) {
                         <li @onclick=@(() => setDirectory(dir))>&#128448; <b>@Path.GetFileName(dir)</b></li>
@@ -70,7 +70,12 @@
                     File: 
                 </span>
                 <span style="flex-grow:2;">
-                    <input class="qk-explorer-path" disabled="@(!AllowEdit)" @bind=currentFilename>
+                    <input list="datalist-@(currentDirectory)" class="qk-explorer-path" disabled="@(!AllowEdit)" @bind=currentFilename>
+                    <datalist id="datalist-@(currentDirectory)">
+                        @foreach (var name in files) {
+                            <option>@name</option>
+                        }
+                    </datalist>
                 </span>
                 <span style="flex-grow:1;">
                     <select class="qk-explorer-filters" @bind=filterIndex>
@@ -240,8 +245,8 @@
         listFiles();
     }
 
-    private List<string> recent = new List<string>();
-    private int maxRecent = 8;
+    private static List<string> recent = new List<string>();
+    private static int maxRecent = 8;
     private void cancel() {
         this.OnCancel?.Invoke();
     }
@@ -249,8 +254,8 @@
         if (!string.IsNullOrEmpty(fullPath)) {
             this.OnConfirm?.Invoke(fullPath);
             recent.Add(this.currentDirectory);
-            while (this.recent.Count > maxRecent) {
-                this.recent.RemoveAt(0); // remove oldest
+            while (recent.Count > maxRecent) {
+                recent.RemoveAt(0); // remove oldest
             }
         }
     }
