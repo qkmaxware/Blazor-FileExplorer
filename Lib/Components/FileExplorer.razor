@@ -13,8 +13,11 @@
         <span>
             Path:
         </span>
-        <span style="flex-grow:1;">
+        <span style="flex-grow:2;">
             <input class="qk-explorer-path" disabled value="@currentDirectory">
+        </span>
+        <span style="flex-grow:1; min-width: 6em; padding-left: 6px;">
+            <input class="qk-explorer-path" placeholder="Search @(currentDirectory != null ? Path.GetFileName(currentDirectory) : string.Empty)" @bind=nameFilter>
         </span>
         <button @onclick=refresh class="qk-explorer-button qk-no-bg">
             &#128472;
@@ -58,10 +61,15 @@
             <div class="qk-explorer-inlay" style="height: 50vh; overflow-y: auto;">
                 <ul class="qk-explorer-list">
                     @foreach (var dir in subdirs) {
-                        <li @onclick=@(() => setDirectory(dir))>&#128448; <b>@Path.GetFileName(dir)</b></li>
+                        var fname = Path.GetFileName(dir);
+                        if (matchesNameFilter(fname)) {
+                            <li @onclick=@(() => setDirectory(dir))>&#128448; <b>@fname</b></li>
+                        }
                     }
                     @foreach (var name in files) {
-                        <li @onclick=@(() => selectFile(name))>@name</li>
+                        if (matchesNameFilter(name)) {
+                            <li @onclick=@(() => selectFile(name))>@name</li>
+                        }
                     }
                 </ul>
             </div>
@@ -140,12 +148,22 @@
         if (clearHistory)
             pushHistory(path);
 
+        this.nameFilter = null;      // Clear filter when changing directories
         this.currentFilename = null; // Deselect file when changing directories
         listFolders();
         listFiles();
     }
     private void selectFile(string filename) {
         this.currentFilename = filename;
+    }
+
+    private string nameFilter;
+    public bool matchesNameFilter(string filename) {
+        if (string.IsNullOrEmpty(nameFilter)) {
+            return true;
+        } else {
+            return filename.IndexOf(nameFilter, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
     }
 
     private List<string> subdirs = new List<string>();
