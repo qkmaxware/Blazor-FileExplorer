@@ -271,7 +271,8 @@
     private void confirm() {
         if (!string.IsNullOrEmpty(fullPath)) {
             this.OnConfirm?.Invoke(fullPath);
-            recent.Add(this.currentDirectory);
+            if (!recent.Contains(this.currentDirectory))
+                recent.Add(this.currentDirectory);
             while (recent.Count > maxRecent) {
                 recent.RemoveAt(0); // remove oldest
             }
