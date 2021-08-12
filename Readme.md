@@ -14,7 +14,7 @@ Qkmaxware.Blazor.FileExplorer is a file browser/explorer component for Blazor. T
 See [License](LICENSE.md) for license details.
 
 ## Example
-An example of how to use and customize the node-editor can be shown in the [Test](Test) directory of this repo. 
+An example of how to use and customize the file browser can be shown in the [Test](Test) directory of this repo. 
 
 ![](Test/preview.png)
 
